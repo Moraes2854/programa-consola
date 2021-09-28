@@ -1,6 +1,6 @@
 require('colors');
 const { guardarDB, leerDB } = require('./helpers/guardarArchivo');
-const { inquirerMenu, pause, leerInput } = require('./helpers/inquirer');
+const { inquirerMenu, pause, leerInput, inquirerCompletarTareas, inquirerBorrarTarea, confirmar } = require('./helpers/inquirer');
 const Tarea = require('./models/tarea');
 const Tareas = require('./models/tareas');
 
@@ -17,23 +17,32 @@ const main = async  () =>{
     let aux = {};
     if (tareasDB){
         aux=JSON.parse(tareasDB);
-        console.log(aux);
         Object.keys(aux).forEach((key) =>{
-            tareas.crearTarea(aux[key].descripcion);
+            tareas.agregarTarea(aux[key]);
         });
     }
 
-    await pause();
     do{
+        console.clear();
         opt = await inquirerMenu();
 
         if(opt.opcion == '1'){
-            console.log('entro al if');
             tareas.crearTarea(await leerInput('Descripcion: '));
+            guardarDB(tareas.listadoArr);
         }
-        if(opt.opcion == '2'){
-            console.log(tareas.listadoArr);
-        } 
+        if(opt.opcion == '2')tareas.listadoCompleto();
+        if(opt.opcion == '3')tareas.listarTareasCompletadas();
+        if(opt.opcion == '4')tareas.listarTareasPendientes();
+        if(opt.opcion == '5'){
+            tareas.completarTareas(await inquirerCompletarTareas(tareas.tareasPendientes));
+            guardarDB(tareas.listadoArr);
+        }
+        if(opt.opcion == '6'){
+            const id = await inquirerBorrarTarea(tareas.listadoArr);
+            const ok = await confirmar('¿Estas seguro?');
+            if (ok) tareas.borrarTarea(id);
+            guardarDB(tareas.listadoArr);
+        }
         await pause();
     }while(opt.opcion!='0');
 }
